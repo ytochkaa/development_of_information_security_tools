@@ -8,14 +8,15 @@ void listDirsRecursively(const QString &path, QTextStream &out)
     QDir dir(path);
 
     if (!dir.exists()) {
-        out << "The path does not exist:" << path;
+        out << "The path does not exist:" << path << endl;
         return;
     }
 
-    out << "Directory:" << dir.absolutePath();
+    out << "Directory:" << dir.absolutePath() << endl;
 
     //Подпапки
-    dir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
+    //QDir::AllDirs	попробовать
+    dir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
     QStringList subDirs = dir.entryList();
 
     //Рекурсия
@@ -28,7 +29,7 @@ void listDirsRecursively(const QString &path, QTextStream &out)
 int main(int argc, char *argv[]){
     QCoreApplication a(argc, argv);
 
-    QString startPath = " ";//тут должен быть путь 
+    QString startPath = "C:/Users/darya/Desktop/Combez/7_semester/Number_Theory_Methods_in_Cryptography";    
     QTextStream out(stdout);
 
     listDirsRecursively(startPath, out);
