@@ -18,7 +18,9 @@ find_package(QT NAMES Qt5 REQUIRED COMPONENTS Core)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 
 add_executable(${PROJECT_NAME}
-  test_task.cpp
+  directorywalker.cpp
+  directorywalker.h
+  main.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
