@@ -1,18 +1,18 @@
 #include <QDir>
-//#include <QDebug>
+#include "directorywalker.h"
 #include <QTextStream>
 #include <QCoreApplication>
 
-void listDirsRecursively(const QString &path, QTextStream &out)
+void DirectoryWalker::listDirsRecursively(const QString &path, QTextStream &out)
 {
     QDir dir(path);
 
     if (!dir.exists()) {
-        out << "The path does not exist:" << path << endl;
+        out << "The path does not exist:" << path << Qt::endl;
         return;
     }
 
-    out << "Directory:" << dir.absolutePath() << endl;
+    out << "Directory:" << dir.absolutePath() << Qt::endl;
 
     //Подпапки
     //QDir::AllDirs	попробовать
@@ -24,15 +24,4 @@ void listDirsRecursively(const QString &path, QTextStream &out)
         QString fullPath = dir.absoluteFilePath(subDir);
         listDirsRecursively(fullPath, out);
     }
-}
-
-int main(int argc, char *argv[]){
-    QCoreApplication a(argc, argv);
-
-    QString startPath = "C:/Users/darya/Desktop/Combez/7_semester/Number_Theory_Methods_in_Cryptography";    
-    QTextStream out(stdout);
-
-    listDirsRecursively(startPath, out);
-
-    return 0;
 }
