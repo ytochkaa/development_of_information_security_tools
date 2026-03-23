@@ -1,6 +1,5 @@
 .vscode/
 build/
-.vscode/
-build/
 other_libs/
+test_zone/
 
