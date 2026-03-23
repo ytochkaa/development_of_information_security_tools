@@ -20,6 +20,8 @@ int main(int argc, char *argv[]){
         cout << "2. Расшифровать файл" << endl;
         cout << "0. Выход" << endl;
         cout << "Ваш выбор: ";
+        //C:\Users\darya\Desktop\Combez\8_semester\Development of information security tools\development_of_information_security_tools\test_zone\test1.txt
+        //C:\Users\darya\Desktop\Combez\8_semester\Development of information security tools\development_of_information_security_tools\test_zone\test1.txt
         
         int choice;
         cin >> choice;
@@ -28,54 +30,53 @@ int main(int argc, char *argv[]){
         if (choice == 0) {
             cout << "Программа завершена." << endl;
             break;
-        }
+        } 
         
         string filePathStr;
         string passwordStr;
         
-        switch (choice) {
-            case 1:
-                cout << "ШИФРОВАНИЕ" << endl;
+        if (choice==1) {
+            cout << "ШИФРОВАНИЕ" << endl;
                 
-                cout << "Введите путь к файлу для шифрования: ";
-                std::getline(cin, filePathStr);
+            cout << "Введите путь к файлу для шифрования: ";
+            std::getline(cin, filePathStr);
                 
-                cout << "Введите пароль: ";
-                std::getline(cin, passwordStr);
+            cout << "Введите пароль: ";
+            std::getline(cin, passwordStr);
                 
-                if (encryptor.encryptFile(
-                    QString::fromStdString(filePathStr), 
-                    QString::fromStdString(passwordStr))) {
-                    cout << "Файл успешно зашифрован!" << endl;
-                } else {
-                    cout << "Ошибка при шифровании файла!" << endl;
-                }
-                break;
+            if (encryptor.encryptFile(
+                QString::fromStdString(filePathStr), 
+                QString::fromStdString(passwordStr))) {
+                cout << "Файл успешно зашифрован!" << endl;
+            } else {
+                cout << "Ошибка при шифровании файла!" << endl;
+            }
+            break;
+        }    
+        else if (choice==2) {
+            cout << "ДЕШИФРОВАНИЕ" << endl;
                 
-            case 2: 
-                cout << "ДЕШИФРОВАНИЕ" << endl;
+            cout << "Введите путь к файлу для дешифрования: ";
+            std::getline(cin, filePathStr);
                 
-                cout << "Введите путь к файлу для дешифрования: ";
-                std::getline(cin, filePathStr);
+            cout << "Введите пароль: ";
+            std::getline(cin, passwordStr);
                 
-                cout << "Введите пароль: ";
-                std::getline(cin, passwordStr);
-                
-                // Выполняем дешифрование
-                if (encryptor.decryptFile(
-                    QString::fromStdString(filePathStr), 
-                    QString::fromStdString(passwordStr))) {
-                    cout << "Файл успешно дешифрован!" << endl;
-                } else {
-                    cout << "Ошибка при дешифровании файла!" << endl;
-                }
-                break;
-            default:
-                cout << "Неверный выбор!" << endl;
-                break;
+            // Выполняем дешифрование
+            if (encryptor.decryptFile(
+                QString::fromStdString(filePathStr), 
+                QString::fromStdString(passwordStr))) {
+                cout << "Файл успешно дешифрован!" << endl;
+            } else {
+                cout << "Ошибка при дешифровании файла!" << endl;
+            }
+            break;
+        }
+        else { 
+        cout << "Неверный выбор!" << endl;
+        break;
         }
     }
-    
     return 0;
 }
 /*    
