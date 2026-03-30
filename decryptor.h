@@ -1,13 +1,10 @@
 #include <QString>
 #include <QByteArray>
 #include "crypto_constants.h"
-
-class Encryptor {
+class Decryptor {
 public:
-    Encryptor();
-    static bool isFileEncrypted(const QString &filePath);
-    
-    bool encryptFile(const QString &filePath, const QString &password);
+    Decryptor();
+    bool decryptFile(const QString &filePath, const QString &password);
     
 private:
     QByteArray deriveKeyFromPassword(const QString &password, const unsigned char* salt);

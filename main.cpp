@@ -4,14 +4,19 @@
 #include <iostream>
 #include "directorywalker.h"
 #include "encryptor.h"
+#include "decryptor.h"
+#include "crypto_constants.h"
 #include <openssl/crypto.h>
 
 using namespace std;
-
+// ВЫНЕСТИ ОТДЕЛЬНО ПРОВЕРКИ
 int main(int argc, char *argv[]){
     setlocale(LC_ALL, "Russian");
     QCoreApplication a(argc, argv);
+
     Encryptor encryptor;
+    Decryptor decryptor;
+
     QTextStream out(stdout);
 
     while (true) {
@@ -29,7 +34,6 @@ int main(int argc, char *argv[]){
         
         if (choice == 0) {
             cout << "Программа завершена." << endl;
-            break;
         } 
         
         string filePathStr;
@@ -51,7 +55,6 @@ int main(int argc, char *argv[]){
             } else {
                 cout << "Ошибка при шифровании файла!" << endl;
             }
-            break;
         }    
         else if (choice==2) {
             cout << "ДЕШИФРОВАНИЕ" << endl;
@@ -63,18 +66,16 @@ int main(int argc, char *argv[]){
             std::getline(cin, passwordStr);
                 
             // Выполняем дешифрование
-            if (encryptor.decryptFile(
+            if (decryptor.decryptFile(
                 QString::fromStdString(filePathStr), 
                 QString::fromStdString(passwordStr))) {
                 cout << "Файл успешно дешифрован!" << endl;
             } else {
                 cout << "Ошибка при дешифровании файла!" << endl;
             }
-            break;
         }
         else { 
         cout << "Неверный выбор!" << endl;
-        break;
         }
     }
     return 0;
