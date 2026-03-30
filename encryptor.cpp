@@ -16,37 +16,30 @@ Encryptor::Encryptor() {
     OpenSSL_add_all_algorithms();
 }
 
-QByteArray Encryptor::deriveKeyFromPassword(const QString &password) {
+QByteArray Encryptor::deriveKeyFromPassword(const QString &password, const unsigned char* salt) {
+    
     unsigned char key[KEY_SIZE];
     QByteArray passwordBytes = password.toUtf8();
     
-    QByteArray hash = QCryptographicHash::hash(
-        passwordBytes, 
-        QCryptographicHash::Sha256
+    int result = PKCS5_PBKDF2_HMAC(
+        passwordBytes.constData(),
+        passwordBytes.size(),
+        salt,
+        16, // размер salt
+        100000, // количество итераций
+        EVP_sha256(),
+        KEY_SIZE,
+        key
     );
-    memcpy(key, hash.constData(), KEY_SIZE);
+
+    if (result != 1) {
+        return QByteArray();
+    }
     
     return QByteArray((char*)key, KEY_SIZE);
 }
 
-QByteArray Encryptor::calculateFileHash(const QString &filePath) {
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return QByteArray();
-    }
-    
-    QCryptographicHash hash(QCryptographicHash::Sha256);
-    const int BUFFER_SIZE = 8192;
-    QByteArray buffer;
-    
-    while (!file.atEnd()) {
-        buffer = file.read(BUFFER_SIZE);
-        hash.addData(buffer);
-    }
-    
-    file.close();
-    return hash.result();
-}
+
 
 bool Encryptor::isFileEncrypted(const QString &filePath) {
     if (!QFile::exists(filePath)) {
@@ -60,30 +53,7 @@ bool Encryptor::isFileEncrypted(const QString &filePath) {
     
     qint64 fileSize = file.size();
     
-    if (fileSize < HASH_SIZE + NONCE_SIZE + TAG_SIZE + 1) {
-        file.close();
-        return false;
-    }
-    
-    QByteArray savedHash = file.read(HASH_SIZE);
-    
-    if (savedHash.size() != HASH_SIZE) {
-        file.close();
-        return false;
-    }
-    
-    // Теперь читаем nonce, зашифрованные данные и тег
-    QByteArray nonce = file.read(NONCE_SIZE);
-    if (nonce.size() != NONCE_SIZE) {
-        file.close();
-        return false;
-    }
-    
-    qint64 encryptedDataSize = fileSize - HASH_SIZE - NONCE_SIZE - TAG_SIZE;
-    QByteArray encryptedData = file.read(encryptedDataSize);
-    
-    QByteArray tag = file.read(TAG_SIZE);
-    if (tag.size() != TAG_SIZE) {
+    if (fileSize < NONCE_SIZE + TAG_SIZE + 16) {
         file.close();
         return false;
     }
@@ -101,18 +71,17 @@ bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
     }
 
     if (isFileEncrypted(filePath)) {
-        cout << "ОШИБКА: Файл уже зашифрован! Повторное шифрование запрещено." << endl;
-        return false;
-    }
-    cout << "Вычисление хэша оригинального файла..." << endl;
-    QByteArray originalHash = calculateFileHash(filePath);
-    
-    if (originalHash.isEmpty()) {
-        cout << "ОШИБКА: Не удалось вычислить хэш файла!" << endl;
+        cout << "ОШИБКА: Файл уже зашифрован" << endl;
         return false;
     }
 
-    QByteArray key = deriveKeyFromPassword(password);
+    unsigned char salt[16];
+    if (RAND_bytes(salt, sizeof(salt)) != 1) {
+        cout << "Ошибка генерации salt!" << endl;
+        return false;
+    }
+
+    QByteArray key = deriveKeyFromPassword(password, salt);
     
     unsigned char nonce[NONCE_SIZE];
     if (RAND_bytes(nonce, NONCE_SIZE) != 1) {
@@ -145,7 +114,7 @@ bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
         return false;
     }
     
-    tempFile.write(originalHash);
+    tempFile.write((char*)salt, 16);
     tempFile.write((char*)nonce, NONCE_SIZE);    
     
     QFile inFile(filePath);
@@ -213,14 +182,13 @@ bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
         return false;
     }
     
-    qint64 encryptedSize = QFileInfo(filePath).size();
+    qint64 encryptedSize = QFileInfo(filePath).size();//самопис???????
     cout << "Зашифрованный размер: " << encryptedSize << " байт" << endl;
-    cout << "Формат файла: [Хэш SHA-256 (32 байт)][Nonce (12 байт)][Зашифрованные данные][Тег (16 байт)]" << endl;
     
     cout << "=== AES-GCM ШИФРОВАНИЕ УСПЕШНО ЗАВЕРШЕНО ===\n" << endl;
     return true;
 }
-
+/// ДЕШИФРОВАНИЕ поделить 
 bool Encryptor::decryptFile(const QString &filePath, const QString &password) {
     cout << "\n=== НАЧАЛО AES-GCM ДЕШИФРОВАНИЯ ===" << endl;
     
@@ -240,13 +208,13 @@ bool Encryptor::decryptFile(const QString &filePath, const QString &password) {
         return false;
     }
     
-    QByteArray savedOriginalHash = inFile.read(HASH_SIZE);
-    if (savedOriginalHash.size() != HASH_SIZE) {
-        cout << "Ошибка чтения хэша из файла!" << endl;
+    unsigned char salt[16];
+    if (inFile.read((char*)salt, sizeof(salt)) != sizeof(salt)) {
+        cout << "Ошибка чтения salt из файла!" << endl;
         inFile.close();
         return false;
     }
-
+    
     unsigned char nonce[NONCE_SIZE];
     if (inFile.read((char*)nonce, NONCE_SIZE) != NONCE_SIZE) {
         cout << "Ошибка чтения nonce из файла!" << endl;
@@ -274,7 +242,7 @@ bool Encryptor::decryptFile(const QString &filePath, const QString &password) {
     
     inFile.close();
     
-        QByteArray key = deriveKeyFromPassword(password);
+    QByteArray key = deriveKeyFromPassword(password, salt);
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {
@@ -344,11 +312,8 @@ bool Encryptor::decryptFile(const QString &filePath, const QString &password) {
     if (QFile::exists(filePath)) {
         QFile::remove(filePath);
     }
-    
-    if (!QFile::copy(tempFile.fileName(), filePath)) {
-        cout << "Ошибка при замене файла!" << endl;
-        return false;
-    }
+
+    QFile::copy(tempFile.fileName(), filePath);
     
     cout << "ДЕШИФРОВАНИЕ ЗАВЕРШЕНО" << endl;
     return true;
