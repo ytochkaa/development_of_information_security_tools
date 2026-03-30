@@ -15,7 +15,7 @@ public:
     bool decryptFile(const QString &filePath, const QString &password);
     
 private:
-    QByteArray deriveKeyFromPassword(const QString &password);
+    QByteArray deriveKeyFromPassword(const QString &password, const unsigned char* salt);
     static QByteArray calculateFileHash(const QString &filePath);
     static bool verifyFileHash(const QString &filePath, const QByteArray &expectedHash);
     
