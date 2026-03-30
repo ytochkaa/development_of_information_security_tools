@@ -21,8 +21,8 @@ int main(int argc, char *argv[]){
         cout << "0. Выход" << endl;
         cout << "Ваш выбор: ";
         //C:\Users\darya\Desktop\Combez\8_semester\Development of information security tools\development_of_information_security_tools\test_zone\test1.txt
-        //C:\Users\darya\Desktop\Combez\8_semester\Development of information security tools\development_of_information_security_tools\test_zone\test1.txt
-        
+        //C:\Users\darya\Desktop\Combez\8_semester\Development of information security tools\development_of_information_security_tools\test_zone\тест1.txt
+        //1305221
         int choice;
         cin >> choice;
         cin.ignore();
