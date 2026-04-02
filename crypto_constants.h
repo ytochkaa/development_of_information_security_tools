@@ -7,5 +7,8 @@ static constexpr int KEY_SIZE   = 32;
 static constexpr int NONCE_SIZE = 12;
 // Размер тега аутентификации
 static constexpr int TAG_SIZE   = 16;
+// Размер соли и соль
+static constexpr char MAGIC[] = "ENCFILE";
+static constexpr int MAGIC_SIZE = 7;
 
 #endif // CRYPTO_CONSTANTS_H

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstring>
 #include "encryptor.h"
 #include "decryptor.h"
 #include "crypto_constants.h"
@@ -55,6 +56,20 @@ bool Decryptor::decryptFile(const QString &filePath, const QString &password) {
         return false;
     }
     
+    char magic[MAGIC_SIZE];
+
+    if (inFile.read(magic, MAGIC_SIZE) != MAGIC_SIZE) {
+        cout << "Ошибка чтения сигнатуры!" << endl;
+        inFile.close();
+        return false;
+    }
+
+    if (memcmp(magic, MAGIC, MAGIC_SIZE) != 0) {
+        cout << "Ошибка: файл не зашифрован этой программой!" << endl;
+        inFile.close();
+        return false;
+    }
+
     unsigned char salt[16];
     if (inFile.read((char*)salt, sizeof(salt)) != sizeof(salt)) {
         cout << "Ошибка чтения salt из файла!" << endl;
@@ -70,7 +85,7 @@ bool Decryptor::decryptFile(const QString &filePath, const QString &password) {
     }
     
     qint64 fileSize = inFile.size();
-    qint64 dataSize = fileSize - 16 - NONCE_SIZE - TAG_SIZE;    
+    qint64 dataSize = fileSize - 16 - NONCE_SIZE - TAG_SIZE - MAGIC_SIZE;    
     
     if (dataSize <= 0) {
         cout << "Ошибка: Файл слишком мал или поврежден!" << endl;
