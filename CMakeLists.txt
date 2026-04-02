@@ -20,14 +20,14 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 find_package(OpenSSL REQUIRED)
 
 add_executable(${PROJECT_NAME}
-    directorywalker.cpp
-    directorywalker.h
     main.cpp
     encryptor.h
     encryptor.cpp
     decryptor.h
     decryptor.cpp
     crypto_constants.h
+    crypto_manager.h
+    crypto_manager.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
