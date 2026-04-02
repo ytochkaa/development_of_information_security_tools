@@ -1,5 +1,7 @@
 #include <iostream>
 #include "encryptor.h"
+#include "crypto_constants.h"
+#include <cstring>
 #include <QFile>
 #include <QDir>
 #include <QTemporaryFile>
@@ -49,15 +51,17 @@ bool Encryptor::isFileEncrypted(const QString &filePath) {
         return false;
     }
     
-    qint64 fileSize = file.size();
+    char magic[MAGIC_SIZE];
     
-    if (fileSize < NONCE_SIZE + TAG_SIZE + 16) {
+    if (file.read(magic, MAGIC_SIZE) != MAGIC_SIZE) {
         file.close();
         return false;
     }
     
     file.close();
-    return true;
+
+    //Сравниваем побайтно magic и MAGIC
+    return memcmp(magic, MAGIC, MAGIC_SIZE) == 0;
 }
 
 bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
@@ -112,6 +116,7 @@ bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
         return false;
     }
     
+    tempFile.write(MAGIC, MAGIC_SIZE);
     tempFile.write((char*)salt, 16);
     tempFile.write((char*)nonce, NONCE_SIZE);    
     

@@ -10,7 +10,7 @@ using namespace std;
 // ВЫНЕСТИ ОТДЕЛЬНО ПРОВЕРКИ
 // системный файл 
 // пустой файл 
-
+// ограничить пароль (вводиый)
 int main(int argc, char *argv[]){
     setlocale(LC_ALL, "Russian");
     QCoreApplication a(argc, argv);
