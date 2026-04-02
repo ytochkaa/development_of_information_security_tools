@@ -2,20 +2,19 @@
 #include <QTextStream>
 #include <QDir>
 #include <iostream>
-#include "directorywalker.h"
-#include "encryptor.h"
-#include "decryptor.h"
-#include "crypto_constants.h"
 #include <openssl/crypto.h>
+#include "crypto_constants.h"
+#include "crypto_manager.h"
 
 using namespace std;
 // ВЫНЕСТИ ОТДЕЛЬНО ПРОВЕРКИ
+// системный файл 
+// пустой файл 
+
 int main(int argc, char *argv[]){
     setlocale(LC_ALL, "Russian");
     QCoreApplication a(argc, argv);
 
-    Encryptor encryptor;
-    Decryptor decryptor;
 
     QTextStream out(stdout);
 
@@ -48,7 +47,7 @@ int main(int argc, char *argv[]){
             cout << "Введите пароль: ";
             std::getline(cin, passwordStr);
                 
-            if (encryptor.encryptFile(
+            if (CryptoManager::instance().encrypt(
                 QString::fromStdString(filePathStr), 
                 QString::fromStdString(passwordStr))) {
                 cout << "Файл успешно зашифрован!" << endl;
@@ -66,7 +65,7 @@ int main(int argc, char *argv[]){
             std::getline(cin, passwordStr);
                 
             // Выполняем дешифрование
-            if (decryptor.decryptFile(
+            if (CryptoManager::instance().decrypt(
                 QString::fromStdString(filePathStr), 
                 QString::fromStdString(passwordStr))) {
                 cout << "Файл успешно дешифрован!" << endl;
