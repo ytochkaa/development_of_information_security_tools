@@ -3,6 +3,8 @@
 #include "encryptor.h"
 #include "decryptor.h"
 #include "crypto_constants.h"
+#include "password_key_derivation.h"
+
 #include <QFile>
 #include <QDir>
 #include <QTemporaryFile>
@@ -18,30 +20,6 @@ using namespace std;
 Decryptor::Decryptor() {
     OpenSSL_add_all_algorithms();
 }
-
-QByteArray Decryptor::deriveKeyFromPassword(const QString &password, const unsigned char* salt) {
-    
-    unsigned char key[KEY_SIZE];
-    QByteArray passwordBytes = password.toUtf8();
-    
-    int result = PKCS5_PBKDF2_HMAC(
-        passwordBytes.constData(),
-        passwordBytes.size(),
-        salt,
-        16, // размер salt
-        100000, // количество итераций
-        EVP_sha256(),
-        KEY_SIZE,
-        key
-    );
-
-    if (result != 1) {
-        return QByteArray();
-    }
-    
-    return QByteArray((char*)key, KEY_SIZE);
-}
-
 bool Decryptor::decryptFile(const QString &filePath, const QString &password) {
     cout << "\n=== НАЧАЛО AES-GCM ДЕШИФРОВАНИЯ ===" << endl;
     
@@ -104,7 +82,7 @@ bool Decryptor::decryptFile(const QString &filePath, const QString &password) {
     
     inFile.close();
     
-    QByteArray key = deriveKeyFromPassword(password, salt);
+    QByteArray key = PasswordKeyDerivation::deriveKeyFromPassword(password, salt); 
 
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     if (!ctx) {

@@ -28,6 +28,8 @@ add_executable(${PROJECT_NAME}
     crypto_constants.h
     crypto_manager.h
     crypto_manager.cpp
+    password_key_derivation.h
+    password_key_derivation.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

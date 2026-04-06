@@ -5,7 +5,4 @@ class Decryptor {
 public:
     Decryptor();
     bool decryptFile(const QString &filePath, const QString &password);
-    
-private:
-    QByteArray deriveKeyFromPassword(const QString &password, const unsigned char* salt);
 };

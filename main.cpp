@@ -5,12 +5,14 @@
 #include <openssl/crypto.h>
 #include "crypto_constants.h"
 #include "crypto_manager.h"
+#include "password_key_derivation.h"
 
 using namespace std;
 // ВЫНЕСТИ ОТДЕЛЬНО ПРОВЕРКИ
 // системный файл 
 // пустой файл 
 // ограничить пароль (вводиый)
+// вернуть обход
 int main(int argc, char *argv[]){
     setlocale(LC_ALL, "Russian");
     QCoreApplication a(argc, argv);
