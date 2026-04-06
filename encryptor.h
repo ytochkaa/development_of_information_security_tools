@@ -8,7 +8,4 @@ public:
     static bool isFileEncrypted(const QString &filePath);
     
     bool encryptFile(const QString &filePath, const QString &password);
-    
-private:
-    QByteArray deriveKeyFromPassword(const QString &password, const unsigned char* salt);
 };

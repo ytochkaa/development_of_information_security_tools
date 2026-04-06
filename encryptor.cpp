@@ -1,6 +1,7 @@
 #include <iostream>
 #include "encryptor.h"
 #include "crypto_constants.h"
+#include "password_key_derivation.h"
 #include <cstring>
 #include <QFile>
 #include <QDir>
@@ -16,29 +17,6 @@ using namespace std;
 
 Encryptor::Encryptor() {
     OpenSSL_add_all_algorithms();
-}
-
-QByteArray Encryptor::deriveKeyFromPassword(const QString &password, const unsigned char* salt) {
-    
-    unsigned char key[KEY_SIZE];
-    QByteArray passwordBytes = password.toUtf8();
-    
-    int result = PKCS5_PBKDF2_HMAC(
-        passwordBytes.constData(),
-        passwordBytes.size(),
-        salt,
-        16, // размер salt
-        100000, // количество итераций
-        EVP_sha256(),
-        KEY_SIZE,
-        key
-    );
-
-    if (result != 1) {
-        return QByteArray();
-    }
-    
-    return QByteArray((char*)key, KEY_SIZE);
 }
 
 bool Encryptor::isFileEncrypted(const QString &filePath) {
@@ -83,7 +61,12 @@ bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
         return false;
     }
 
-    QByteArray key = deriveKeyFromPassword(password, salt);
+QByteArray key = PasswordKeyDerivation::deriveKeyFromPassword(password, salt);    
+
+    if (key.isEmpty()) {
+    cout << "Ошибка генерации ключа!" << endl;
+    return false;
+    }
     
     unsigned char nonce[NONCE_SIZE];
     if (RAND_bytes(nonce, NONCE_SIZE) != 1) {
