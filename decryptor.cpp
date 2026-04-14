@@ -7,7 +7,7 @@
 
 #include <QFile>
 #include <QDir>
-#include <QTemporaryFile>
+#include <QSaveFile>
 #include <QCryptographicHash>
 #include <QDebug>
 
@@ -137,20 +137,21 @@ bool Decryptor::decryptFile(const QString &filePath, const QString &password) {
     
     decryptedData.resize(outLen + finalLen);
     
-    QTemporaryFile tempFile;
-    if (!tempFile.open()) {
-        cout << "Ошибка создания временного файла!" << endl;
+    QSaveFile outFile(filePath);
+    if (!outFile.open(QIODevice::WriteOnly)) {
+        cout << "Ошибка создания временного файла для безопасной записи!" << endl;
         return false;
     }
     
-    tempFile.write(decryptedData);
-    tempFile.close();
-    
-    if (QFile::exists(filePath)) {
-        QFile::remove(filePath);
+    if (outFile.write(decryptedData) != decryptedData.size()) {
+        cout << "Ошибка записи расшифрованного файла!" << endl;
+        outFile.cancelWriting();
+        return false;
     }
-
-    QFile::copy(tempFile.fileName(), filePath);
+    if (!outFile.commit()) {
+        cout << "Ошибка при безопасной замене файла!" << endl;
+        return false;
+    }
     
     cout << "ДЕШИФРОВАНИЕ ЗАВЕРШЕНО" << endl;
     return true;

@@ -5,7 +5,7 @@
 #include <cstring>
 #include <QFile>
 #include <QDir>
-#include <QTemporaryFile>
+#include <QSaveFile>
 #include <QCryptographicHash>
 #include <QDebug>
 
@@ -92,22 +92,27 @@ QByteArray key = PasswordKeyDerivation::deriveKeyFromPassword(password, salt);
         return false;
     }
     
-    QTemporaryFile tempFile;
-    if (!tempFile.open()) {
-        cout << "Ошибка создания временного файла!" << endl;
+    QSaveFile outFile(filePath);
+    if (!outFile.open(QIODevice::WriteOnly)) {
+        cout << "Ошибка создания временного файла для безопасной записи!" << endl;
         EVP_CIPHER_CTX_free(ctx);
         return false;
     }
     
-    tempFile.write(MAGIC, MAGIC_SIZE);
-    tempFile.write((char*)salt, 16);
-    tempFile.write((char*)nonce, NONCE_SIZE);    
+    if (outFile.write(MAGIC, MAGIC_SIZE) != MAGIC_SIZE ||
+        outFile.write((char*)salt, 16) != 16 ||
+        outFile.write((char*)nonce, NONCE_SIZE) != NONCE_SIZE) {
+        cout << "Ошибка записи заголовка зашифрованного файла!" << endl;
+        outFile.cancelWriting();
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+    }
     
     QFile inFile(filePath);
     if (!inFile.open(QIODevice::ReadOnly)) {
         cout << "Ошибка открытия файла для чтения!" << endl;
         EVP_CIPHER_CTX_free(ctx);
-        tempFile.close();
+        outFile.cancelWriting();
         return false;
     }
     
@@ -125,12 +130,18 @@ QByteArray key = PasswordKeyDerivation::deriveKeyFromPassword(password, salt);
         if (EVP_EncryptUpdate(ctx, outBuffer, &outLen, inBuffer, bytesRead) != 1) {
             cout << "Ошибка при шифровании блока!" << endl;
             inFile.close();
-            tempFile.close();
+            outFile.cancelWriting();
             EVP_CIPHER_CTX_free(ctx);
             return false;
         }
         
-        tempFile.write((char*)outBuffer, outLen);
+        if (outFile.write((char*)outBuffer, outLen) != outLen) {
+            cout << "Ошибка записи зашифрованного блока!" << endl;
+            inFile.close();
+            outFile.cancelWriting();
+            EVP_CIPHER_CTX_free(ctx);
+            return false;
+        }
         totalBytes += bytesRead;
     }
     
@@ -138,7 +149,7 @@ QByteArray key = PasswordKeyDerivation::deriveKeyFromPassword(password, salt);
     if (EVP_EncryptFinal_ex(ctx, outBuffer, &outLen) != 1) {
         cout << "Ошибка при финализации шифрования!" << endl;
         inFile.close();
-        tempFile.close();
+        outFile.cancelWriting();
         EVP_CIPHER_CTX_free(ctx);
         return false;
     }
@@ -146,25 +157,25 @@ QByteArray key = PasswordKeyDerivation::deriveKeyFromPassword(password, salt);
     if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, TAG_SIZE, tag) != 1) {
         cout << "Ошибка получения тега аутентификации!" << endl;
         inFile.close();
-        tempFile.close();
+        outFile.cancelWriting();
         EVP_CIPHER_CTX_free(ctx);
         return false;
     }
 
-    tempFile.write((char*)tag, TAG_SIZE);
+    if (outFile.write((char*)tag, TAG_SIZE) != TAG_SIZE) {
+        cout << "Ошибка записи тега аутентификации!" << endl;
+        outFile.cancelWriting();
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+    }
     
     inFile.close();
-    tempFile.close();
     EVP_CIPHER_CTX_free(ctx);
     
     cout << "Исходный размер: " << totalBytes << " байт" << endl;
-    
-    if (QFile::exists(filePath)) {
-        QFile::remove(filePath);
-    }
-    
-    if (!QFile::copy(tempFile.fileName(), filePath)) {
-        cout << "Ошибка при замене файла!" << endl;
+
+    if (!outFile.commit()) {
+        cout << "Ошибка при безопасной замене файла!" << endl;
         return false;
     }
     
