@@ -29,11 +29,10 @@ int main(int argc, char *argv[]){
         //C:\Users\darya\Desktop\Combez\8_semester\Development of information security tools\development_of_information_security_tools\test_zone\test1.txt
         //C:\Users\darya\Desktop\Combez\8_semester\Development of information security tools\development_of_information_security_tools\test_zone\тест1.txt
         //1305221
-        int choice;
-        cin >> choice;
-        cin.ignore();
+        string choice;
+        std::getline(cin, choice);
         
-        if (choice == 0) {
+        if (choice == "0") {
             cout << "Программа завершена." << endl;
             return 0;
         } 
@@ -41,7 +40,7 @@ int main(int argc, char *argv[]){
         string filePathStr;
         string passwordStr;
         
-        if (choice==1) {
+        if (choice == "1") {
             cout << "ШИФРОВАНИЕ" << endl;
                 
             cout << "Введите путь к файлу для шифрования: ";
@@ -58,7 +57,7 @@ int main(int argc, char *argv[]){
                 cout << "Ошибка при шифровании файла!" << endl;
             }
         }    
-        else if (choice==2) {
+        else if (choice == "2") {
             cout << "ДЕШИФРОВАНИЕ" << endl;
                 
             cout << "Введите путь к файлу для дешифрования: ";
