@@ -35,6 +35,7 @@ int main(int argc, char *argv[]){
         
         if (choice == 0) {
             cout << "Программа завершена." << endl;
+            return 0;
         } 
         
         string filePathStr;
