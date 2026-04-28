@@ -1,8 +1,11 @@
 #include <iostream>
 #include "encryptor.h"
+#include "crypto_constants.h"
+#include "password_key_derivation.h"
+#include <cstring>
 #include <QFile>
 #include <QDir>
-#include <QTemporaryFile>
+#include <QSaveFile>
 #include <QCryptographicHash>
 #include <QDebug>
 
@@ -16,38 +19,6 @@ Encryptor::Encryptor() {
     OpenSSL_add_all_algorithms();
 }
 
-QByteArray Encryptor::deriveKeyFromPassword(const QString &password) {
-    unsigned char key[KEY_SIZE];
-    QByteArray passwordBytes = password.toUtf8();
-    
-    QByteArray hash = QCryptographicHash::hash(
-        passwordBytes, 
-        QCryptographicHash::Sha256
-    );
-    memcpy(key, hash.constData(), KEY_SIZE);
-    
-    return QByteArray((char*)key, KEY_SIZE);
-}
-
-QByteArray Encryptor::calculateFileHash(const QString &filePath) {
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly)) {
-        return QByteArray();
-    }
-    
-    QCryptographicHash hash(QCryptographicHash::Sha256);
-    const int BUFFER_SIZE = 8192;
-    QByteArray buffer;
-    
-    while (!file.atEnd()) {
-        buffer = file.read(BUFFER_SIZE);
-        hash.addData(buffer);
-    }
-    
-    file.close();
-    return hash.result();
-}
-
 bool Encryptor::isFileEncrypted(const QString &filePath) {
     if (!QFile::exists(filePath)) {
         return false;
@@ -58,38 +29,17 @@ bool Encryptor::isFileEncrypted(const QString &filePath) {
         return false;
     }
     
-    qint64 fileSize = file.size();
+    char magic[MAGIC_SIZE];
     
-    if (fileSize < HASH_SIZE + NONCE_SIZE + TAG_SIZE + 1) {
-        file.close();
-        return false;
-    }
-    
-    QByteArray savedHash = file.read(HASH_SIZE);
-    
-    if (savedHash.size() != HASH_SIZE) {
-        file.close();
-        return false;
-    }
-    
-    // Теперь читаем nonce, зашифрованные данные и тег
-    QByteArray nonce = file.read(NONCE_SIZE);
-    if (nonce.size() != NONCE_SIZE) {
-        file.close();
-        return false;
-    }
-    
-    qint64 encryptedDataSize = fileSize - HASH_SIZE - NONCE_SIZE - TAG_SIZE;
-    QByteArray encryptedData = file.read(encryptedDataSize);
-    
-    QByteArray tag = file.read(TAG_SIZE);
-    if (tag.size() != TAG_SIZE) {
+    if (file.read(magic, MAGIC_SIZE) != MAGIC_SIZE) {
         file.close();
         return false;
     }
     
     file.close();
-    return true;
+
+    //Сравниваем побайтно magic и MAGIC
+    return memcmp(magic, MAGIC, MAGIC_SIZE) == 0;
 }
 
 bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
@@ -101,18 +51,22 @@ bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
     }
 
     if (isFileEncrypted(filePath)) {
-        cout << "ОШИБКА: Файл уже зашифрован! Повторное шифрование запрещено." << endl;
-        return false;
-    }
-    cout << "Вычисление хэша оригинального файла..." << endl;
-    QByteArray originalHash = calculateFileHash(filePath);
-    
-    if (originalHash.isEmpty()) {
-        cout << "ОШИБКА: Не удалось вычислить хэш файла!" << endl;
+        cout << "ОШИБКА: Файл уже зашифрован" << endl;
         return false;
     }
 
-    QByteArray key = deriveKeyFromPassword(password);
+    unsigned char salt[16];
+    if (RAND_bytes(salt, sizeof(salt)) != 1) {
+        cout << "Ошибка генерации salt!" << endl;
+        return false;
+    }
+
+QByteArray key = PasswordKeyDerivation::deriveKeyFromPassword(password, salt);    
+
+    if (key.isEmpty()) {
+    cout << "Ошибка генерации ключа!" << endl;
+    return false;
+    }
     
     unsigned char nonce[NONCE_SIZE];
     if (RAND_bytes(nonce, NONCE_SIZE) != 1) {
@@ -138,21 +92,27 @@ bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
         return false;
     }
     
-    QTemporaryFile tempFile;
-    if (!tempFile.open()) {
-        cout << "Ошибка создания временного файла!" << endl;
+    QSaveFile outFile(filePath);
+    if (!outFile.open(QIODevice::WriteOnly)) {
+        cout << "Ошибка создания временного файла для безопасной записи!" << endl;
         EVP_CIPHER_CTX_free(ctx);
         return false;
     }
     
-    tempFile.write(originalHash);
-    tempFile.write((char*)nonce, NONCE_SIZE);    
+    if (outFile.write(MAGIC, MAGIC_SIZE) != MAGIC_SIZE ||
+        outFile.write((char*)salt, 16) != 16 ||
+        outFile.write((char*)nonce, NONCE_SIZE) != NONCE_SIZE) {
+        cout << "Ошибка записи заголовка зашифрованного файла!" << endl;
+        outFile.cancelWriting();
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+    }
     
     QFile inFile(filePath);
     if (!inFile.open(QIODevice::ReadOnly)) {
         cout << "Ошибка открытия файла для чтения!" << endl;
         EVP_CIPHER_CTX_free(ctx);
-        tempFile.close();
+        outFile.cancelWriting();
         return false;
     }
     
@@ -170,12 +130,18 @@ bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
         if (EVP_EncryptUpdate(ctx, outBuffer, &outLen, inBuffer, bytesRead) != 1) {
             cout << "Ошибка при шифровании блока!" << endl;
             inFile.close();
-            tempFile.close();
+            outFile.cancelWriting();
             EVP_CIPHER_CTX_free(ctx);
             return false;
         }
         
-        tempFile.write((char*)outBuffer, outLen);
+        if (outFile.write((char*)outBuffer, outLen) != outLen) {
+            cout << "Ошибка записи зашифрованного блока!" << endl;
+            inFile.close();
+            outFile.cancelWriting();
+            EVP_CIPHER_CTX_free(ctx);
+            return false;
+        }
         totalBytes += bytesRead;
     }
     
@@ -183,7 +149,7 @@ bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
     if (EVP_EncryptFinal_ex(ctx, outBuffer, &outLen) != 1) {
         cout << "Ошибка при финализации шифрования!" << endl;
         inFile.close();
-        tempFile.close();
+        outFile.cancelWriting();
         EVP_CIPHER_CTX_free(ctx);
         return false;
     }
@@ -191,165 +157,31 @@ bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
     if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG, TAG_SIZE, tag) != 1) {
         cout << "Ошибка получения тега аутентификации!" << endl;
         inFile.close();
-        tempFile.close();
+        outFile.cancelWriting();
         EVP_CIPHER_CTX_free(ctx);
         return false;
     }
 
-    tempFile.write((char*)tag, TAG_SIZE);
+    if (outFile.write((char*)tag, TAG_SIZE) != TAG_SIZE) {
+        cout << "Ошибка записи тега аутентификации!" << endl;
+        outFile.cancelWriting();
+        EVP_CIPHER_CTX_free(ctx);
+        return false;
+    }
     
     inFile.close();
-    tempFile.close();
     EVP_CIPHER_CTX_free(ctx);
     
     cout << "Исходный размер: " << totalBytes << " байт" << endl;
-    
-    if (QFile::exists(filePath)) {
-        QFile::remove(filePath);
-    }
-    
-    if (!QFile::copy(tempFile.fileName(), filePath)) {
-        cout << "Ошибка при замене файла!" << endl;
+
+    if (!outFile.commit()) {
+        cout << "Ошибка при безопасной замене файла!" << endl;
         return false;
     }
     
-    qint64 encryptedSize = QFileInfo(filePath).size();
+    qint64 encryptedSize = QFileInfo(filePath).size();//самопис???????
     cout << "Зашифрованный размер: " << encryptedSize << " байт" << endl;
-    cout << "Формат файла: [Хэш SHA-256 (32 байт)][Nonce (12 байт)][Зашифрованные данные][Тег (16 байт)]" << endl;
     
     cout << "=== AES-GCM ШИФРОВАНИЕ УСПЕШНО ЗАВЕРШЕНО ===\n" << endl;
-    return true;
-}
-
-bool Encryptor::decryptFile(const QString &filePath, const QString &password) {
-    cout << "\n=== НАЧАЛО AES-GCM ДЕШИФРОВАНИЯ ===" << endl;
-    
-    if (!QFile::exists(filePath)) {
-        cout << "Ошибка: Файл не найден - " << filePath.toStdString() << endl;
-        return false;
-    }
-    
-    if (!isFileEncrypted(filePath)) {
-        cout << "ОШИБКА: Файл не является зашифрованным!" << endl;
-        return false;
-    }
-        
-    QFile inFile(filePath);
-    if (!inFile.open(QIODevice::ReadOnly)) {
-        cout << "Ошибка открытия файла для чтения!" << endl;
-        return false;
-    }
-    
-    QByteArray savedOriginalHash = inFile.read(HASH_SIZE);
-    if (savedOriginalHash.size() != HASH_SIZE) {
-        cout << "Ошибка чтения хэша из файла!" << endl;
-        inFile.close();
-        return false;
-    }
-
-    unsigned char nonce[NONCE_SIZE];
-    if (inFile.read((char*)nonce, NONCE_SIZE) != NONCE_SIZE) {
-        cout << "Ошибка чтения nonce из файла!" << endl;
-        inFile.close();
-        return false;
-    }
-    
-    qint64 fileSize = inFile.size();
-    qint64 dataSize = fileSize - HASH_SIZE - NONCE_SIZE - TAG_SIZE;
-    
-    if (dataSize <= 0) {
-        cout << "Ошибка: Файл слишком мал или поврежден!" << endl;
-        inFile.close();
-        return false;
-    }
-    
-    QByteArray encryptedData = inFile.read(dataSize);
-    
-    unsigned char tag[TAG_SIZE];
-    if (inFile.read((char*)tag, TAG_SIZE) != TAG_SIZE) {
-        cout << "Ошибка чтения тега аутентификации!" << endl;
-        inFile.close();
-        return false;
-    }
-    
-    inFile.close();
-    
-        QByteArray key = deriveKeyFromPassword(password);
-
-    EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    if (!ctx) {
-        cout << "Ошибка создания контекста дешифрования!" << endl;
-        return false;
-    }
-    
-    if (EVP_DecryptInit_ex(ctx, EVP_aes_256_gcm(), NULL, NULL, NULL) != 1) {
-        cout << "Ошибка инициализации дешифрования!" << endl;
-        EVP_CIPHER_CTX_free(ctx);
-        return false;
-    }
-    
-    if (EVP_DecryptInit_ex(ctx, NULL, NULL, 
-                           (unsigned char*)key.constData(), nonce) != 1) {
-        cout << "Ошибка установки ключа и nonce!" << endl;
-        EVP_CIPHER_CTX_free(ctx);
-        return false;
-    }
-    
-    QByteArray decryptedData;
-    decryptedData.resize(dataSize);
-    unsigned char* outBuffer = (unsigned char*)decryptedData.data();
-    int outLen = 0;
-    
-    if (EVP_DecryptUpdate(ctx, outBuffer, &outLen, 
-                          (unsigned char*)encryptedData.constData(), 
-                          encryptedData.size()) != 1) {
-        cout << "Ошибка при дешифровании данных!" << endl;
-        EVP_CIPHER_CTX_free(ctx);
-        return false;
-    }
-    
-    decryptedData.resize(outLen);
-    
-    if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG, TAG_SIZE, tag) != 1) {
-        cout << "Ошибка установки тега аутентификации!" << endl;
-        EVP_CIPHER_CTX_free(ctx);
-        return false;
-    }
-    
-    int finalLen = 0;
-    int result = EVP_DecryptFinal_ex(ctx, outBuffer + outLen, &finalLen);
-    
-    EVP_CIPHER_CTX_free(ctx);
-    
-    if (result != 1) {
-        cout << "ОШИБКА: Неверный пароль или файл поврежден!" << endl;
-        cout << "Тег аутентификации не совпадает." << endl;
-        return false;
-    }
-    
-    decryptedData.resize(outLen + finalLen);
-    
-    cout << "Дешифрование успешно!" << endl;
-    cout << "Размер после дешифрования: " << decryptedData.size() << " байт" << endl;
-    
-    QTemporaryFile tempFile;
-    if (!tempFile.open()) {
-        cout << "Ошибка создания временного файла!" << endl;
-        return false;
-    }
-    
-    tempFile.write(decryptedData);
-    tempFile.close();
-    
-    if (QFile::exists(filePath)) {
-        QFile::remove(filePath);
-    }
-    
-    if (!QFile::copy(tempFile.fileName(), filePath)) {
-        cout << "Ошибка при замене файла!" << endl;
-        return false;
-    }
-    
-    cout << "ДЕШИФРОВАНИЕ ЗАВЕРШЕНО" << endl;
     return true;
 }

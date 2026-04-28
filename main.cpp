@@ -2,16 +2,22 @@
 #include <QTextStream>
 #include <QDir>
 #include <iostream>
-#include "directorywalker.h"
-#include "encryptor.h"
 #include <openssl/crypto.h>
+#include "crypto_constants.h"
+#include "crypto_manager.h"
+#include "password_key_derivation.h"
 
 using namespace std;
 
+// ВЫНЕСТИ ОТДЕЛЬНО ПРОВЕРКИ
+// системный файл 
+// пустой файл 
+// вернуть обход
 int main(int argc, char *argv[]){
     setlocale(LC_ALL, "Russian");
     QCoreApplication a(argc, argv);
-    Encryptor encryptor;
+
+
     QTextStream out(stdout);
 
     while (true) {
@@ -23,58 +29,70 @@ int main(int argc, char *argv[]){
         //C:\Users\darya\Desktop\Combez\8_semester\Development of information security tools\development_of_information_security_tools\test_zone\test1.txt
         //C:\Users\darya\Desktop\Combez\8_semester\Development of information security tools\development_of_information_security_tools\test_zone\тест1.txt
         //1305221
-        int choice;
-        cin >> choice;
-        cin.ignore();
+        string choice;
+        std::getline(cin, choice);
         
-        if (choice == 0) {
+        if (choice == "0") {
             cout << "Программа завершена." << endl;
-            break;
+            return 0;
         } 
         
         string filePathStr;
         string passwordStr;
         
-        if (choice==1) {
+        if (choice == "1") {
             cout << "ШИФРОВАНИЕ" << endl;
                 
             cout << "Введите путь к файлу для шифрования: ";
             std::getline(cin, filePathStr);
                 
-            cout << "Введите пароль: ";
+            cout << "Введите пароль (от " << MIN_PASSWORD_LENGTH << " до " 
+                 << MAX_PASSWORD_LENGTH << " символов): ";
             std::getline(cin, passwordStr);
+            
+            if (!PasswordKeyDerivation::validatePassword(passwordStr)) {
+                continue;
+            }
                 
-            if (encryptor.encryptFile(
+            if (CryptoManager::instance().encrypt(
                 QString::fromStdString(filePathStr), 
                 QString::fromStdString(passwordStr))) {
                 cout << "Файл успешно зашифрован!" << endl;
             } else {
                 cout << "Ошибка при шифровании файла!" << endl;
             }
-            break;
+            
+            // Очистка памяти пароля
+            std::fill(passwordStr.begin(), passwordStr.end(), '\0');
         }    
-        else if (choice==2) {
+        else if (choice == "2") {
             cout << "ДЕШИФРОВАНИЕ" << endl;
                 
             cout << "Введите путь к файлу для дешифрования: ";
             std::getline(cin, filePathStr);
                 
-            cout << "Введите пароль: ";
+            cout << "Введите пароль (от " << MIN_PASSWORD_LENGTH << " до " 
+                 << MAX_PASSWORD_LENGTH << " символов): ";
             std::getline(cin, passwordStr);
+            
+            if (!PasswordKeyDerivation::validatePassword(passwordStr)) {
+                continue;
+            }
                 
             // Выполняем дешифрование
-            if (encryptor.decryptFile(
+            if (CryptoManager::instance().decrypt(
                 QString::fromStdString(filePathStr), 
                 QString::fromStdString(passwordStr))) {
                 cout << "Файл успешно дешифрован!" << endl;
             } else {
                 cout << "Ошибка при дешифровании файла!" << endl;
             }
-            break;
+            
+            // Очистка памяти пароля
+            std::fill(passwordStr.begin(), passwordStr.end(), '\0');
         }
         else { 
         cout << "Неверный выбор!" << endl;
-        break;
         }
     }
     return 0;
