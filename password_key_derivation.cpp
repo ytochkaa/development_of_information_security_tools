@@ -3,6 +3,9 @@
 
 #include <openssl/evp.h>
 #include <openssl/crypto.h>
+#include <iostream>
+
+using namespace std;
 
 QByteArray PasswordKeyDerivation::deriveKeyFromPassword(const QString &password, const unsigned char* salt) {
     
@@ -29,4 +32,25 @@ QByteArray PasswordKeyDerivation::deriveKeyFromPassword(const QString &password,
     OPENSSL_cleanse(key, KEY_SIZE);
 
     return resultKey;
+}
+
+bool PasswordKeyDerivation::validatePassword(const string &password) {
+    if (password.empty()) {
+        cout << "ОШИБКА: Пароль не может быть пустым!" << endl;
+        return false;
+    }
+    
+    if (password.length() < MIN_PASSWORD_LENGTH) {
+        cout << "ОШИБКА: Пароль должен быть не менее " << MIN_PASSWORD_LENGTH 
+             << " символов!" << endl;
+        return false;
+    }
+    
+    if (password.length() > MAX_PASSWORD_LENGTH) {
+        cout << "ОШИБКА: Пароль не может быть более " << MAX_PASSWORD_LENGTH 
+             << " символов!" << endl;
+        return false;
+    }
+    
+    return true;
 }

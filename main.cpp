@@ -8,10 +8,10 @@
 #include "password_key_derivation.h"
 
 using namespace std;
+
 // ВЫНЕСТИ ОТДЕЛЬНО ПРОВЕРКИ
 // системный файл 
 // пустой файл 
-// ограничить пароль (вводиый)
 // вернуть обход
 int main(int argc, char *argv[]){
     setlocale(LC_ALL, "Russian");
@@ -46,8 +46,13 @@ int main(int argc, char *argv[]){
             cout << "Введите путь к файлу для шифрования: ";
             std::getline(cin, filePathStr);
                 
-            cout << "Введите пароль: ";
+            cout << "Введите пароль (от " << MIN_PASSWORD_LENGTH << " до " 
+                 << MAX_PASSWORD_LENGTH << " символов): ";
             std::getline(cin, passwordStr);
+            
+            if (!PasswordKeyDerivation::validatePassword(passwordStr)) {
+                continue;
+            }
                 
             if (CryptoManager::instance().encrypt(
                 QString::fromStdString(filePathStr), 
@@ -56,6 +61,9 @@ int main(int argc, char *argv[]){
             } else {
                 cout << "Ошибка при шифровании файла!" << endl;
             }
+            
+            // Очистка памяти пароля
+            std::fill(passwordStr.begin(), passwordStr.end(), '\0');
         }    
         else if (choice == "2") {
             cout << "ДЕШИФРОВАНИЕ" << endl;
@@ -63,8 +71,13 @@ int main(int argc, char *argv[]){
             cout << "Введите путь к файлу для дешифрования: ";
             std::getline(cin, filePathStr);
                 
-            cout << "Введите пароль: ";
+            cout << "Введите пароль (от " << MIN_PASSWORD_LENGTH << " до " 
+                 << MAX_PASSWORD_LENGTH << " символов): ";
             std::getline(cin, passwordStr);
+            
+            if (!PasswordKeyDerivation::validatePassword(passwordStr)) {
+                continue;
+            }
                 
             // Выполняем дешифрование
             if (CryptoManager::instance().decrypt(
@@ -74,6 +87,9 @@ int main(int argc, char *argv[]){
             } else {
                 cout << "Ошибка при дешифровании файла!" << endl;
             }
+            
+            // Очистка памяти пароля
+            std::fill(passwordStr.begin(), passwordStr.end(), '\0');
         }
         else { 
         cout << "Неверный выбор!" << endl;
