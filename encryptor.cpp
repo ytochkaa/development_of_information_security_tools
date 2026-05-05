@@ -179,7 +179,7 @@ QByteArray key = PasswordKeyDerivation::deriveKeyFromPassword(password, salt);
         return false;
     }
     
-    qint64 encryptedSize = QFileInfo(filePath).size();//самопис???????
+    qint64 encryptedSize = QFileInfo(filePath).size();
     cout << "Зашифрованный размер: " << encryptedSize << " байт" << endl;
     
     cout << "=== AES-GCM ШИФРОВАНИЕ УСПЕШНО ЗАВЕРШЕНО ===\n" << endl;
