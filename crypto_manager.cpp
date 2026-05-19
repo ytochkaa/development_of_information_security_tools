@@ -133,6 +133,5 @@ bool CryptoManager::isValidDirectory(const QString &dirPath) {
         std::cout << "Нет прав на чтение директории: " << dirPath.toStdString() << std::endl;
         return false;
     }
-    // Для записи проверяем, можем ли создать временные файлы, но упростим
     return true;
 }
