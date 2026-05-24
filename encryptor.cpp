@@ -55,7 +55,7 @@ bool Encryptor::encryptFile(const QString &filePath, const QString &password) {
         return false;
     }
 
-    unsigned char salt[16];
+    unsigned char salt[SALT_SIZE];
     if (RAND_bytes(salt, sizeof(salt)) != 1) {
         cout << "Ошибка генерации salt!" << endl;
         return false;
@@ -100,7 +100,7 @@ QByteArray key = PasswordKeyDerivation::deriveKeyFromPassword(password, salt);
     }
     
     if (outFile.write(MAGIC, MAGIC_SIZE) != MAGIC_SIZE ||
-        outFile.write((char*)salt, 16) != 16 ||
+        outFile.write((char*)salt, SALT_SIZE) != SALT_SIZE ||
         outFile.write((char*)nonce, NONCE_SIZE) != NONCE_SIZE) {
         cout << "Ошибка записи заголовка зашифрованного файла!" << endl;
         outFile.cancelWriting();
@@ -179,7 +179,7 @@ QByteArray key = PasswordKeyDerivation::deriveKeyFromPassword(password, salt);
         return false;
     }
     
-    qint64 encryptedSize = QFileInfo(filePath).size();//самопис???????
+    qint64 encryptedSize = QFileInfo(filePath).size();
     cout << "Зашифрованный размер: " << encryptedSize << " байт" << endl;
     
     cout << "=== AES-GCM ШИФРОВАНИЕ УСПЕШНО ЗАВЕРШЕНО ===\n" << endl;

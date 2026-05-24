@@ -24,6 +24,8 @@ int main(int argc, char *argv[]){
         cout << "Выберите действие:" << endl;
         cout << "1. Зашифровать файл" << endl;
         cout << "2. Расшифровать файл" << endl;
+        cout << "3. Зашифровать директорию" << endl;
+        cout << "4. Расшифровать директорию" << endl;
         cout << "0. Выход" << endl;
         cout << "Ваш выбор: ";
         //C:\Users\darya\Desktop\Combez\8_semester\Development of information security tools\development_of_information_security_tools\test_zone\test1.txt
@@ -86,6 +88,56 @@ int main(int argc, char *argv[]){
                 cout << "Файл успешно дешифрован!" << endl;
             } else {
                 cout << "Ошибка при дешифровании файла!" << endl;
+            }
+            
+            // Очистка памяти пароля
+            std::fill(passwordStr.begin(), passwordStr.end(), '\0');
+        }
+        else if (choice == "3") {
+            cout << "ШИФРОВАНИЕ ДИРЕКТОРИИ" << endl;
+                
+            cout << "Введите путь к директории для шифрования: ";
+            std::getline(cin, filePathStr);
+                
+            cout << "Введите пароль (от " << MIN_PASSWORD_LENGTH << " до " 
+                 << MAX_PASSWORD_LENGTH << " символов): ";
+            std::getline(cin, passwordStr);
+            
+            if (!PasswordKeyDerivation::validatePassword(passwordStr)) {
+                continue;
+            }
+                
+            if (CryptoManager::instance().encryptDirectory(
+                QString::fromStdString(filePathStr), 
+                QString::fromStdString(passwordStr))) {
+                cout << "Директория успешно зашифрована!" << endl;
+            } else {
+                cout << "Ошибка при шифровании директории!" << endl;
+            }
+            
+            // Очистка памяти пароля
+            std::fill(passwordStr.begin(), passwordStr.end(), '\0');
+        }
+        else if (choice == "4") {
+            cout << "ДЕШИФРОВАНИЕ ДИРЕКТОРИИ" << endl;
+                
+            cout << "Введите путь к директории для дешифрования: ";
+            std::getline(cin, filePathStr);
+                
+            cout << "Введите пароль (от " << MIN_PASSWORD_LENGTH << " до " 
+                 << MAX_PASSWORD_LENGTH << " символов): ";
+            std::getline(cin, passwordStr);
+            
+            if (!PasswordKeyDerivation::validatePassword(passwordStr)) {
+                continue;
+            }
+                
+            if (CryptoManager::instance().decryptDirectory(
+                QString::fromStdString(filePathStr), 
+                QString::fromStdString(passwordStr))) {
+                cout << "Директория успешно дешифрована!" << endl;
+            } else {
+                cout << "Ошибка при дешифровании директории!" << endl;
             }
             
             // Очистка памяти пароля
