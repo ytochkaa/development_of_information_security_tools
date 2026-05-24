@@ -13,8 +13,18 @@ static constexpr int SALT_SIZE = 16;
 // Параметры KDF (PBKDF2 по умолчанию)
 static constexpr int PBKDF2_ITERATIONS = 100000;
 
+// Версия формата
+static constexpr unsigned char FORMAT_VERSION = 1;
+static constexpr int FORMAT_VERSION_SIZE = 1;
+
 // Размер и сигнатура магии формата файла
 static constexpr char MAGIC[] = "ENCFILE";
 static constexpr int MAGIC_SIZE = 7;
+
+// Общий размер заголовка файла
+static constexpr int HEADER_SIZE = MAGIC_SIZE + FORMAT_VERSION_SIZE + SALT_SIZE + NONCE_SIZE;
+
+// Буфер для потокового шифрования/дешифрования
+static constexpr int BUFFER_SIZE = 4096;
 
 #endif // CRYPTO_CONSTANTS_H

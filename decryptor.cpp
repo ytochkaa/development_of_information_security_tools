@@ -49,7 +49,18 @@ bool Decryptor::decryptFile(const QString &filePath, const QString &password) {
     }
 
     unsigned char salt[SALT_SIZE];
-    if (inFile.read((char*)salt, sizeof(salt)) != sizeof(salt)) {
+    unsigned char fileVersion = 0;
+    if (inFile.read((char*)&fileVersion, FORMAT_VERSION_SIZE) != FORMAT_VERSION_SIZE) {
+        cout << "Ошибка чтения версии формата!" << endl;
+        inFile.close();
+        return false;
+    }
+    if (fileVersion != FORMAT_VERSION) {
+        cout << "Ошибка: неподдерживаемая версия формата: " << fileVersion << endl;
+        inFile.close();
+        return false;
+    }
+
         cout << "Ошибка чтения salt из файла!" << endl;
         inFile.close();
         return false;
@@ -63,7 +74,7 @@ bool Decryptor::decryptFile(const QString &filePath, const QString &password) {
     }
 
     qint64 fileSize = inFile.size();
-    qint64 dataSize = fileSize - SALT_SIZE - NONCE_SIZE - TAG_SIZE - MAGIC_SIZE;
+    qint64 dataSize = fileSize - HEADER_SIZE - TAG_SIZE;
 
     if (dataSize <= 0) {
         cout << "Ошибка: Файл слишком мал или поврежден!" << endl;
@@ -112,7 +123,6 @@ bool Decryptor::decryptFile(const QString &filePath, const QString &password) {
         return false;
     }
 
-    const int BUFFER_SIZE = 4096;
     unsigned char inBuffer[BUFFER_SIZE];
     unsigned char outBuffer[BUFFER_SIZE + 16];
 

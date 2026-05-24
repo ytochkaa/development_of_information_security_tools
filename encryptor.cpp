@@ -100,6 +100,7 @@ QByteArray key = PasswordKeyDerivation::deriveKeyFromPassword(password, salt);
     }
     
     if (outFile.write(MAGIC, MAGIC_SIZE) != MAGIC_SIZE ||
+        outFile.write((char*)&FORMAT_VERSION, FORMAT_VERSION_SIZE) != FORMAT_VERSION_SIZE ||
         outFile.write((char*)salt, SALT_SIZE) != SALT_SIZE ||
         outFile.write((char*)nonce, NONCE_SIZE) != NONCE_SIZE) {
         cout << "Ошибка записи заголовка зашифрованного файла!" << endl;
@@ -118,7 +119,6 @@ QByteArray key = PasswordKeyDerivation::deriveKeyFromPassword(password, salt);
     
     cout << "Шифрование файла: " << filePath.toStdString() << endl;
     
-    const int BUFFER_SIZE = 4096;
     unsigned char inBuffer[BUFFER_SIZE];
     unsigned char outBuffer[BUFFER_SIZE];
     
