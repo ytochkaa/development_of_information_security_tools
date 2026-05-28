@@ -1,5 +1,6 @@
 .vscode/
 build/
+build_mingw/
 other_libs/
 test_zone/
 

@@ -1,5 +1,6 @@
-#include "encryptor.h"
-#include "decryptor.h"
+#ifndef CRYPTO_MANAGER_H
+#define CRYPTO_MANAGER_H
+
 #include <QString>
 
 class CryptoManager {
@@ -16,8 +17,17 @@ public:
     static bool isValidDirectory(const QString &dirPath);
 
 private:
+    enum class Operation {
+        Encrypt,
+        Decrypt
+    };
+
     CryptoManager();
 
-    Encryptor encryptor;
-    Decryptor decryptor;
+    static bool isFileEncrypted(const QString &filePath);
+    bool processFile(const QString &filePath, const QString &password, Operation operation);
+    bool encryptFile(const QString &filePath, const QString &password);
+    bool decryptFile(const QString &filePath, const QString &password);
 };
+
+#endif // CRYPTO_MANAGER_H

@@ -21,10 +21,6 @@ find_package(OpenSSL REQUIRED)
 
 add_executable(${PROJECT_NAME}
     main.cpp
-    encryptor.h
-    encryptor.cpp
-    decryptor.h
-    decryptor.cpp
     crypto_constants.h
     crypto_manager.h
     crypto_manager.cpp
