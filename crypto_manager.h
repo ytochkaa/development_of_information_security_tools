@@ -23,6 +23,8 @@ private:
     };
 
     CryptoManager();
+    CryptoManager(const CryptoManager&) = delete;
+    CryptoManager& operator=(const CryptoManager&) = delete;
 
     static bool isFileEncrypted(const QString &filePath);
     bool processFile(const QString &filePath, const QString &password, Operation operation);
