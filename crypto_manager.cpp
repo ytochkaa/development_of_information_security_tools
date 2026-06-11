@@ -39,7 +39,6 @@ bool CryptoManager::encryptDirectory(const QString &dirPath, const QString &pass
         return false;
     }
 
-    QDir dir(dirPath);
     QDirIterator it(dirPath, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
     bool success = true;
     while (it.hasNext()) {
@@ -58,7 +57,6 @@ bool CryptoManager::decryptDirectory(const QString &dirPath, const QString &pass
         return false;
     }
 
-    QDir dir(dirPath);
     QDirIterator it(dirPath, QDir::Files | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
     bool success = true;
     while (it.hasNext()) {
@@ -174,7 +172,6 @@ bool CryptoManager::encryptFile(const QString &filePath, const QString &password
 
     std::cout << "Шифрование файла: " << filePath.toStdString() << std::endl;
 
-    constexpr int BUFFER_SIZE = 4096;
     unsigned char inBuffer[BUFFER_SIZE];
     unsigned char outBuffer[BUFFER_SIZE];
     int outLen = 0;
@@ -359,7 +356,6 @@ bool CryptoManager::decryptFile(const QString &filePath, const QString &password
         return false;
     }
 
-    constexpr int BUFFER_SIZE = 4096;
     unsigned char inBuffer[BUFFER_SIZE];
     unsigned char outBuffer[BUFFER_SIZE + TAG_SIZE];
     qint64 remaining = dataSize;
