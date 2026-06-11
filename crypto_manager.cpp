@@ -238,6 +238,7 @@ bool CryptoManager::encryptFile(const QString &filePath, const QString &password
 
     inFile.close();
     EVP_CIPHER_CTX_free(ctx);
+    OPENSSL_cleanse(key.data(), key.size());
 
     std::cout << "Исходный размер: " << totalBytes << " байт" << std::endl;
 
@@ -393,6 +394,7 @@ bool CryptoManager::decryptFile(const QString &filePath, const QString &password
     int result = EVP_DecryptFinal_ex(ctx, outBuffer, &finalLen);
     EVP_CIPHER_CTX_free(ctx);
     inFile.close();
+    OPENSSL_cleanse(key.data(), key.size());
 
     if (result != 1) {
         std::cout << "ОШИБКА: Неверный пароль или файл поврежден!" << std::endl;
