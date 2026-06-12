@@ -1,24 +1,23 @@
 #include <QCoreApplication>
-#include <QTextStream>
-#include <QDir>
 #include <iostream>
-#include <openssl/crypto.h>
 #include "crypto_constants.h"
 #include "crypto_manager.h"
 #include "password_key_derivation.h"
+#include "test_menu.h"
 
 using namespace std;
 
-// ВЫНЕСТИ ОТДЕЛЬНО ПРОВЕРКИ
-// системный файл 
-// пустой файл 
-// вернуть обход
 int main(int argc, char *argv[]){
     setlocale(LC_ALL, "Russian");
     QCoreApplication a(argc, argv);
 
-
-    QTextStream out(stdout);
+    for (int i = 1; i < argc; i++) {
+        if (std::string(argv[i]) == "--test") {
+            TestMenu testMenu;
+            testMenu.run();
+            return 0;
+        }
+    }
 
     while (true) {
         cout << "Выберите действие:" << endl;
@@ -28,9 +27,7 @@ int main(int argc, char *argv[]){
         cout << "4. Расшифровать директорию" << endl;
         cout << "0. Выход" << endl;
         cout << "Ваш выбор: ";
-        //C:\Users\darya\Desktop\Combez\8_semester\Development of information security tools\development_of_information_security_tools\test_zone\test1.txt
-        //C:\Users\darya\Desktop\Combez\8_semester\Development of information security tools\development_of_information_security_tools\test_zone\тест1.txt
-        //1305221
+
         string choice;
         std::getline(cin, choice);
         
@@ -149,10 +146,3 @@ int main(int argc, char *argv[]){
     }
     return 0;
 }
-/*    
-int main() {
-    setlocale(LC_ALL, "Russian");
-    std::cout << "OpenSSL version: " << OpenSSL_version(OPENSSL_VERSION) << std::endl;
-    return 0;
-}
-*/
