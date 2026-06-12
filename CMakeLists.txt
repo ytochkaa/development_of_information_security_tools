@@ -26,6 +26,11 @@ add_executable(${PROJECT_NAME}
     crypto_manager.cpp
     password_key_derivation.h
     password_key_derivation.cpp
+    itest.h
+    test_menu.h
+    test_menu.cpp
+    test_utils.h
+    test_utils.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
