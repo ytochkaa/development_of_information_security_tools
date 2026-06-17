@@ -159,7 +159,87 @@ Encoder.exe
 
 ---
 
-## 7. Особенности реализации
+## 7. UML-диаграмма
+
+### Диаграмма классов
+
+```mermaid
+classDiagram
+    class main_cpp {
+        +int main(argc, argv)
+    }
+
+    class CryptoManager {
+        +static CryptoManager& instance()
+        +bool encrypt(filePath, password)
+        +bool decrypt(filePath, password)
+        +bool encryptDirectory(dirPath, password)
+        +bool decryptDirectory(dirPath, password)
+        +static bool isValidFileForEncryption(filePath)
+        +static bool isValidFileForDecryption(filePath)
+        +static bool isValidDirectory(dirPath)
+        -bool processFile(filePath, password, operation)
+        -bool encryptFile(filePath, password)
+        -bool decryptFile(filePath, password)
+    }
+
+    class PasswordKeyDerivation {
+        +static QByteArray deriveKeyFromPassword(password, salt)
+        +static bool validatePassword(password)
+    }
+
+    class TestMenu {
+        +void run()
+    }
+
+    class ITest {
+        <<interface>>
+        +virtual string name() const
+        +virtual void run()
+    }
+
+    class TestUtils {
+        +QString testsBasePath()
+        +bool copyDirectory(src, dst)
+        +string getPassword(prompt)
+        +void clearPassword(password)
+    }
+
+    class crypto_constants_h {
+        <<constants>>
+        +MAGIC
+        +FORMAT_VERSION
+        +SALT_SIZE
+        +NONCE_SIZE
+        +TAG_SIZE
+        +KEY_SIZE
+        +BUFFER_SIZE
+        +PBKDF2_ITERATIONS
+    }
+
+    main_cpp ..> CryptoManager : uses
+    main_cpp ..> PasswordKeyDerivation : uses
+    main_cpp ..> TestMenu : uses
+
+    CryptoManager ..> PasswordKeyDerivation : uses
+    CryptoManager ..> crypto_constants_h : uses
+
+    TestMenu o-- ITest : contains
+    TestUtils ..> PasswordKeyDerivation : uses
+    TestUtils ..> crypto_constants_h : uses
+```
+
+### Краткое пояснение
+
+- `main.cpp` запускает меню и вызывает основные операции.
+- `CryptoManager` управляет шифрованием и дешифрованием файлов и директорий.
+- `PasswordKeyDerivation` формирует ключ из пароля.
+- `crypto_constants.h` хранит параметры криптографии.
+- `TestMenu` и вспомогательные классы используются в режиме проверки.
+
+---
+
+## 8. Особенности реализации
 
 - используется `QSaveFile` для атомарной записи;
 - ключ очищается из памяти после использования;
