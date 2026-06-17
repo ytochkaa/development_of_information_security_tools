@@ -163,6 +163,8 @@ Encoder.exe
 
 ### Диаграмма классов
 
+Ниже сразу две версии: одна в Mermaid, другая в виде понятной текстовой схемы.
+
 ```mermaid
 classDiagram
     class main_cpp {
@@ -227,6 +229,38 @@ classDiagram
     TestMenu o-- ITest : contains
     TestUtils ..> PasswordKeyDerivation : uses
     TestUtils ..> crypto_constants_h : uses
+```
+
+```text
++------------------+
+|    main.cpp      |
+|  (точка входа)   |
++--------+---------+
+         |
+         v
++------------------+
+|  CryptoManager    |
+|  encrypt/decrypt  |
++--------+---------+
+         |
+         +----------------------------+
+         |                            |
+         v                            v
++------------------+          +---------------------------+
+| PasswordKeyDeriv.|          |   crypto_constants.h      |
+| deriveKeyFrom... |          | размеры/константы        |
++------------------+          +---------------------------+
+
++------------------+
+|     TestMenu     |
+|   run()          |
++--------+---------+
+         |
+         v
++------------------+
+|       ITest       |
+| interface        |
++------------------+
 ```
 
 ### Краткое пояснение
