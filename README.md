@@ -166,6 +166,16 @@ Encoder.exe
 
 ```mermaid
 classDiagram
+    direction TB
+
+    class TestUtils {
+        <<namespace>>
+        +testsBasePath() QString
+        +copyDirectory(src, dst) bool
+        +getPassword(prompt) string
+        +clearPassword(password) void
+    }
+
     class CryptoManager {
         <<singleton>>
         +instance() CryptoManager&$
@@ -211,20 +221,12 @@ classDiagram
         +run() void$
     }
 
-    class TestUtils {
-        <<namespace>>
-        +testsBasePath() QString
-        +copyDirectory(src, dst) bool
-        +getPassword(prompt) string
-        +clearPassword(password) void
-    }
+    TestUtils ..> PasswordKeyDerivation
+    CryptoManager ..> PasswordKeyDerivation
+    PasswordKeyDerivation ..> CryptoConstants
+    CryptoManager ..> CryptoConstants
 
     TestMenu "1" *-- "0..*" ITest
-
-    CryptoManager ..> PasswordKeyDerivation
-    CryptoManager ..> CryptoConstants
-    PasswordKeyDerivation ..> CryptoConstants
-    TestUtils ..> PasswordKeyDerivation
 ```
 
 **Типы связей:**
