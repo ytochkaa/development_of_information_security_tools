@@ -166,11 +166,6 @@ Encoder.exe
 
 ```mermaid
 classDiagram
-    class Main {
-        <<entry point>>
-        +main(argc, argv) int
-    }
-
     class CryptoManager {
         <<singleton>>
         +instance() CryptoManager&$
@@ -224,10 +219,6 @@ classDiagram
         +clearPassword(password) void
     }
 
-    Main *-- TestMenu
-    Main ..> CryptoManager
-    Main ..> PasswordKeyDerivation
-
     TestMenu "1" *-- "0..*" ITest
 
     CryptoManager ..> PasswordKeyDerivation
@@ -239,11 +230,9 @@ classDiagram
 **Типы связей:**
 
 - **Композиция (`*--`)** — объект владеет жизненным циклом другого:
-  - `Main *-- TestMenu` — `main()` создаёт и хранит экземпляр `TestMenu` (локальный объект);
   - `TestMenu "1" *-- "0..*" ITest` — `TestMenu` владеет набором тестов через `std::vector<std::unique_ptr<ITest>>`.
 - **Зависимость (`..>`)** — объект только *использует* другой, не храня его (статические методы, синглтон, константы):
-  - `Main ..> CryptoManager` — вызов через синглтон `CryptoManager::instance()`;
-  - `Main ..> PasswordKeyDerivation`, `CryptoManager ..> PasswordKeyDerivation` — вызов статических методов;
+  - `CryptoManager ..> PasswordKeyDerivation` — вызов статических методов;
   - `CryptoManager ..> CryptoConstants`, `PasswordKeyDerivation ..> CryptoConstants`, `TestUtils ..> PasswordKeyDerivation` — использование констант.
 
 - `main.cpp` запускает меню и вызывает основные операции.
