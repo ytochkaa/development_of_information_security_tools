@@ -17,12 +17,8 @@ static constexpr int PBKDF2_ITERATIONS = 100000;
 static constexpr char MAGIC[] = "ENCFILE";
 static constexpr int MAGIC_SIZE = 7;
 
-// Версия формата файла
-static constexpr unsigned char FORMAT_VERSION = 1;
-static constexpr int FORMAT_VERSION_SIZE = 1;
-
 // Полный размер заголовка зашифрованного файла
-static constexpr int HEADER_SIZE = MAGIC_SIZE + FORMAT_VERSION_SIZE + SALT_SIZE + NONCE_SIZE;
+static constexpr int HEADER_SIZE = MAGIC_SIZE + SALT_SIZE + NONCE_SIZE;
 
 // Размер буфера для потокового шифрования/дешифрования
 static constexpr int BUFFER_SIZE = 4096;

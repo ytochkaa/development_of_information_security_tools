@@ -153,7 +153,6 @@ bool CryptoManager::encryptFile(const QString &filePath, const QString &password
     }
 
     if (outFile.write(MAGIC, MAGIC_SIZE) != MAGIC_SIZE ||
-        outFile.write(reinterpret_cast<const char*>(&FORMAT_VERSION), FORMAT_VERSION_SIZE) != FORMAT_VERSION_SIZE ||
         outFile.write(reinterpret_cast<char*>(salt), SALT_SIZE) != SALT_SIZE ||
         outFile.write(reinterpret_cast<char*>(nonce), NONCE_SIZE) != NONCE_SIZE) {
         std::cout << "Ошибка записи заголовка зашифрованного файла!" << std::endl;
@@ -282,19 +281,6 @@ bool CryptoManager::decryptFile(const QString &filePath, const QString &password
 
     if (std::memcmp(magic, MAGIC, MAGIC_SIZE) != 0) {
         std::cout << "Ошибка: файл не зашифрован этой программой!" << std::endl;
-        inFile.close();
-        return false;
-    }
-
-    unsigned char version;
-    if (inFile.read(reinterpret_cast<char*>(&version), FORMAT_VERSION_SIZE) != FORMAT_VERSION_SIZE) {
-        std::cout << "Ошибка чтения версии формата файла!" << std::endl;
-        inFile.close();
-        return false;
-    }
-
-    if (version != FORMAT_VERSION) {
-        std::cout << "Ошибка: неподдерживаемая версия формата файла!" << std::endl;
         inFile.close();
         return false;
     }
