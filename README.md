@@ -33,13 +33,12 @@
 ### Формат зашифрованного файла
 
 ```text
-MAGIC(7 байт) | VERSION(1 байт) | SALT(16 байт) | NONCE(12 байт) | DATA | TAG(16 байт)
+MAGIC(7 байт) | SALT(16 байт) | NONCE(12 байт) | DATA | TAG(16 байт)
 ```
 
 Где:
 
 - `MAGIC` — сигнатура `ENCFILE`;
-- `VERSION` — версия формата файла;
 - `SALT` — соль для генерации ключа;
 - `NONCE` — случайное значение для AES-GCM;
 - `DATA` — зашифрованные байты;
@@ -203,7 +202,6 @@ classDiagram
         +SALT_SIZE int$
         +PBKDF2_ITERATIONS int$
         +MAGIC char[]$
-        +FORMAT_VERSION uchar$
         +HEADER_SIZE int$
         +BUFFER_SIZE int$
     }
