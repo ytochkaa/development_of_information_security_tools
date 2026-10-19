@@ -1,6 +1,6 @@
 #include "test_utils.h"
-#include "crypto_constants.h"
-#include "password_key_derivation.h"
+#include "crypto/crypto_constants.h"
+#include "crypto/password_key_derivation.h"
 
 #include <QDir>
 #include <QFile>

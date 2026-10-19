@@ -51,18 +51,21 @@ MAGIC(7 байт) | SALT(16 байт) | NONCE(12 байт) | DATA | TAG(16 ба�
 ```text
 .
 ├── CMakeLists.txt
-├── crypto_constants.h
-├── crypto_manager.h
-├── crypto_manager.cpp
-├── password_key_derivation.h
-├── password_key_derivation.cpp
-├── itest.h
-├── test_menu.h
-├── test_menu.cpp
-├── test_utils.h
-├── test_utils.cpp
-├── main.cpp
-└── README.md
+├── README.md
+└── src/
+    ├── main.cpp                        — точка входа, меню
+    ├── crypto/                         — криптографическое ядро
+    │   ├── crypto_constants.h
+    │   ├── crypto_manager.h
+    │   ├── crypto_manager.cpp
+    │   ├── password_key_derivation.h
+    │   └── password_key_derivation.cpp
+    └── testing/                        — тестовый режим (--test)
+        ├── itest.h
+        ├── test_menu.h
+        ├── test_menu.cpp
+        ├── test_utils.h
+        └── test_utils.cpp
 ```
 
 ---

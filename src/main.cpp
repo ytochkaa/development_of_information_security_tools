@@ -1,9 +1,9 @@
 #include <QCoreApplication>
 #include <iostream>
-#include "crypto_constants.h"
-#include "crypto_manager.h"
-#include "password_key_derivation.h"
-#include "test_menu.h"
+#include "crypto/crypto_constants.h"
+#include "crypto/crypto_manager.h"
+#include "crypto/password_key_derivation.h"
+#include "testing/test_menu.h"
 
 using namespace std;
 

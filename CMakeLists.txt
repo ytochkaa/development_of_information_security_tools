@@ -20,18 +20,23 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core)
 find_package(OpenSSL REQUIRED)
 
 add_executable(${PROJECT_NAME}
-    main.cpp
-    crypto_constants.h
-    crypto_manager.h
-    crypto_manager.cpp
-    password_key_derivation.h
-    password_key_derivation.cpp
-    itest.h
-    test_menu.h
-    test_menu.cpp
-    test_utils.h
-    test_utils.cpp
+    src/main.cpp
+
+    src/crypto/crypto_constants.h
+    src/crypto/crypto_manager.h
+    src/crypto/crypto_manager.cpp
+    src/crypto/password_key_derivation.h
+    src/crypto/password_key_derivation.cpp
+
+    src/testing/itest.h
+    src/testing/test_menu.h
+    src/testing/test_menu.cpp
+    src/testing/test_utils.h
+    src/testing/test_utils.cpp
 )
+
+# Корень исходников: подключения вида "crypto/crypto_manager.h"
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 target_link_libraries(${PROJECT_NAME}
     PRIVATE
